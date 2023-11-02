@@ -47,7 +47,6 @@ class HungarianSolver(OptimalTransportProblem):
         wasserstein_metric = self.cost_matrix[x_index, y_index].sum()
 
         return wasserstein_metric
-      
     
 
 class MinCostFlowSolver(OptimalTransportProblem):
@@ -90,7 +89,6 @@ class MinCostFlowSolver(OptimalTransportProblem):
         return wasserstein_metric
       
 
-
 class MILPSolver(OptimalTransportProblem):
     
     def __init__(self, 
@@ -123,13 +121,13 @@ class MILPSolver(OptimalTransportProblem):
         expression = sum(model.cost[c, k] * model.y[c, k] for c in model.source for k in model.destination)
         model.obj = pe.Objective(sense=pe.minimize, expr=expression)
 
-        def all_served(model, k):
-            # assign exactly one parameter set k to every city c.
+        def serve_all_destinations(model, k):
+            # assign exactly one origin set c to every destination k.
             constraint = (sum(model.y[c, k] for c in model.source) == 1)
             return constraint
 
-        def city_unicity(model, c):
-            # assign exactly one parameter set k to every city c.
+        def origin_unicity(model, c):
+            # an origin c can only be assign to one given destination k.
             constraint = (sum(model.y[c, k] for k in model.destination) == 1)
             return constraint
 
