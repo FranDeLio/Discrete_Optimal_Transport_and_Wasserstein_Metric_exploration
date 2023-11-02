@@ -13,7 +13,6 @@ import logging
 logging.getLogger('pyomo.core').setLevel(logging.ERROR)
 
 
-
 class OptimalTransportProblem(ABC):
 
     def __init__(self, 
@@ -130,7 +129,7 @@ class MILPSolver(OptimalTransportProblem):
             # an origin c can only be assign to one given destination k.
             constraint = (sum(model.y[c, k] for k in model.destination) == 1)
             return constraint
-
+          
         model.serve_all_destinations = pe.Constraint(model.destination, rule=serve_all_destinations)
         model.origin_unicity = pe.Constraint(model.source, rule=origin_unicity)
 
