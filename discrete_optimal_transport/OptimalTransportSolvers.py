@@ -1,11 +1,16 @@
 import numpy as np
 from abc import ABC, abstractmethod
-
 from scipy.stats import norm
 from scipy.spatial import distance
 import numpy as np
+import pandas as pd
 from scipy.optimize import linear_sum_assignment
 from ortools.graph.python import min_cost_flow
+import pyomo.environ as pe
+import pyomo.opt as po
+
+import logging
+logging.getLogger('pyomo.core').setLevel(logging.ERROR)
 
 
 class OptimalTransportProblem(ABC):
@@ -23,6 +28,7 @@ class OptimalTransportProblem(ABC):
     @abstractmethod
     def solve(self) -> float:
         pass
+
 
 class HungarianSolver(OptimalTransportProblem):
     
@@ -85,3 +91,60 @@ class MinCostFlowSolver(OptimalTransportProblem):
         wasserstein_metric = model.optimal_cost()
                 
         return wasserstein_metric
+
+
+class MILPSolver(OptimalTransportProblem):
+    
+    def __init__(self, 
+                 kwargs_source : dict, 
+                 kwargs_destination : dict, 
+                 n_samples : int) -> None:
+        
+        super().__init__(kwargs_source, kwargs_destination, n_samples)
+
+    def solve(self, 
+              decision_variable_type : str = 'real',
+              solver_name : str = 'cbc') -> float:
+
+        if decision_variable_type == 'real':
+            decision_domain = pe.NonNegativeReals
+        else:
+            decision_domain = pe.Binary
+
+        solver = po.SolverFactory(solver_name)
+        model = pe.ConcreteModel()
+
+        model.source = pe.Set(initialize=set(range(0, self.n_samples)))
+        model.destination = pe.Set(initialize=set(range(0, self.n_samples)))
+
+        cost = pd.DataFrame(self.cost_matrix).stack().reset_index().set_index(['level_0','level_1'])[0].to_dict()
+        model.cost = pe.Param(model.source, model.destination, initialize=cost)
+
+        model.y = pe.Var(model.source, model.destination, domain=decision_domain, initialize=0) # variable: 1 if assign parameters set k to city c else 0.
+
+        expression = sum(model.cost[c, k] * model.y[c, k] for c in model.source for k in model.destination)
+        model.obj = pe.Objective(sense=pe.minimize, expr=expression)
+
+        def all_served(model, k):
+            # assign exactly one parameter set k to every city c.
+            constraint = (sum(model.y[c, k] for c in model.source) == 1)
+            return constraint
+
+        def city_unicity(model, c):
+            # assign exactly one parameter set k to every city c.
+            constraint = (sum(model.y[c, k] for k in model.destination) == 1)
+            return constraint
+
+        model.all_served = pe.Constraint(model.destination, rule=all_served)
+        model.con_unicity = pe.Constraint(model.source, rule=city_unicity)
+
+        result = solver.solve(model, timelimit=60)
+
+        wasserstein_metric = result['Problem'][0]['Lower bound']
+
+        return wasserstein_metric
+
+
+
+
+
