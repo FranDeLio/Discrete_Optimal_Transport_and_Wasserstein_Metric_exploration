@@ -13,6 +13,7 @@ import logging
 logging.getLogger('pyomo.core').setLevel(logging.ERROR)
 
 
+
 class OptimalTransportProblem(ABC):
 
     def __init__(self, 
@@ -46,6 +47,7 @@ class HungarianSolver(OptimalTransportProblem):
         wasserstein_metric = self.cost_matrix[x_index, y_index].sum()
 
         return wasserstein_metric
+      
     
 
 class MinCostFlowSolver(OptimalTransportProblem):
@@ -86,6 +88,7 @@ class MinCostFlowSolver(OptimalTransportProblem):
         wasserstein_metric = model.optimal_cost()
                 
         return wasserstein_metric
+      
 
 
 class MILPSolver(OptimalTransportProblem):
