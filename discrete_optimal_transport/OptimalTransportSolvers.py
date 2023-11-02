@@ -67,23 +67,18 @@ class MinCostFlowSolver(OptimalTransportProblem):
     
         # connect first layer of nodes to the second layer
         for i in range(1, 1+self.n_samples):
-            for j in range(1+self.n_samples, 1+self.n_samples+self.n_samples):
+            for j in range(1+self.n_samples, 1+2*self.n_samples):
                 model.add_arc_with_capacity_and_unit_cost(i, j, 1, int(self.cost_matrix[i-1, j-self.n_samples-1]))
 
         # connect the second layer to the delivery node
-        for i in range(1+self.n_samples, 1+self.n_samples+self.n_samples):
+        for i in range(1+self.n_samples, 1+2*self.n_samples):
                 model.add_arc_with_capacity_and_unit_cost(i, 1+self.n_samples+self.n_samples, 1, 0)
 
-        # lastly we specify the delivery node requests all original samples and all original samples need to be delivered
-        for i in range(0, 2+self.n_samples+self.n_samples):
+        # lastly we specify the delivery node requests all original samples and all requests are to be fulfilled
+        model.set_node_supply(0, self.n_samples)
+        model.set_node_supply(1+2*self.n_samples, -self.n_samples)
 
-            if i==0:
-                model.set_node_supply(i, self.n_samples)
-            
-            elif i==1+self.n_samples+self.n_samples:
-                model.set_node_supply(i, -self.n_samples)
-
-            else:
+        for i in range(1, 1+2*self.n_samples):
                 model.set_node_supply(i, 0)
 
         model.solve()
@@ -143,8 +138,3 @@ class MILPSolver(OptimalTransportProblem):
         wasserstein_metric = result['Problem'][0]['Lower bound']
 
         return wasserstein_metric
-
-
-
-
-
