@@ -127,8 +127,8 @@ class MILPSolver(OptimalTransportProblem):
             return constraint
 
         def origin_unicity(model, c):
-            # an origin c can only be assign to one given destination k.
-            constraint = (sum(model.y[c, k] for k in model.destination) == 1)
+        def city_unicity(model, c):
+            # assign exactly one parameter set k to every city c.
             return constraint
 
         model.all_served = pe.Constraint(model.destination, rule=all_served)
