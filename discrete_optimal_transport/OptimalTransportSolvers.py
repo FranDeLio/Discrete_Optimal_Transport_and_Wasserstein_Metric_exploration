@@ -1,10 +1,11 @@
 import numpy as np
 from abc import ABC, abstractmethod
-
 from scipy.stats import norm
 from scipy.spatial import distance
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+from ortools.graph.python import min_cost_flow
+
 
 class OptimalTransportProblem(ABC):
 
@@ -13,13 +14,14 @@ class OptimalTransportProblem(ABC):
                  kwargs_destination : dict, 
                  n_samples : int) -> None:
 
-        self.source_coordinates = [tuple(norm.rvs(**kwargs_source)) for i in range(0, n_samples)]
-        self.destination_coordinates = [tuple(norm.rvs(**kwargs_destination)) for i in range(0, n_samples)]
+        self.n_samples = n_samples
+        self.source_coordinates = [tuple(norm.rvs(**kwargs_source)) for i in range(0, self.n_samples)]
+        self.destination_coordinates = [tuple(norm.rvs(**kwargs_destination)) for i in range(0, self.n_samples)]
+        self.cost_matrix = distance.cdist(self.source_coordinates, self.destination_coordinates, 'euclidean')
     
     @abstractmethod
     def solve(self) -> float:
         pass
-        
 
 class HungarianSolver(OptimalTransportProblem):
     
@@ -32,13 +34,12 @@ class HungarianSolver(OptimalTransportProblem):
 
     def solve(self) -> float:
 
-        cost_matrix = distance.cdist(self.source_coordinates, self.destination_coordinates, 'euclidean')
-        x_index, y_index = linear_sum_assignment(cost_matrix)
+        x_index, y_index = linear_sum_assignment(self.cost_matrix)
         
-        wasserstein_metric = cost_matrix[x_index, y_index].sum()
+        wasserstein_metric = self.cost_matrix[x_index, y_index].sum()
 
         return wasserstein_metric
-        
+    
 
 class MinCostFlowSolver(OptimalTransportProblem):
     
