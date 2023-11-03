@@ -8,8 +8,8 @@ from scipy.optimize import linear_sum_assignment
 from ortools.graph.python import min_cost_flow
 import pyomo.environ as pe
 import pyomo.opt as po
-
 import logging
+
 
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
