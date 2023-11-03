@@ -13,7 +13,6 @@ import logging
 
 logging.getLogger("pyomo.core").setLevel(logging.ERROR)
 
-
 class OptimalTransportProblem(ABC):
     def __init__(
         self, kwargs_source: dict, kwargs_destination: dict, n_samples: int
@@ -141,6 +140,7 @@ class MILPSolver(OptimalTransportProblem):
         model.serve_all_destinations = pe.Constraint(
             model.destination, rule=serve_all_destinations
         )
+
         model.origin_unicity = pe.Constraint(model.source, rule=origin_unicity)
 
         result = solver.solve(model, timelimit=60)
